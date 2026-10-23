@@ -19,7 +19,7 @@ export function TicketsScreen({ theme, layout }: PluginScreenProps) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Agents tickets sync</Text>
+      <Text style={styles.title}>Agents Tickets Sync</Text>
       <Text style={styles.muted}>
         Agents created with PASEO_AGENT_TICKET=ANY-1234 are bound to that ticket. It moves to In Progress when they start, and only their ticket_done call
         (with evidence) closes it. Agents never see these API keys.
