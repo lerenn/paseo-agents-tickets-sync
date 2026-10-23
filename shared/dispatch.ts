@@ -17,7 +17,7 @@ export const teamConfigSchema = z.object({
   states: z.array(z.enum(DISPATCH_STATE_TYPES)).min(1).default(["unstarted"]),
   /** `provider` or `provider/model`. Falls back to the file's top-level provider. */
   provider: z.string().trim().min(1).optional(),
-  /** Ticket label to agent-roles role: the first match sets PASEO_AGENT_ROLE on the agent. */
+  /** Ticket label to agents-roles role: the first match sets PASEO_AGENT_ROLE on the agent. */
   roles: z.record(z.string(), z.string().trim().min(1)).default({}),
   /** Only look in this connection. Default: every connection of the backend. */
   connection: z.string().trim().min(1).optional(),

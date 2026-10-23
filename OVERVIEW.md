@@ -20,7 +20,7 @@ The team to project mapping is configuration, not code. It lives in a `dispatch.
 }
 ```
 
-`project` is a Paseo project id or name. `label` is the dispatch label (defaults to the setting). `states` lists the eligible state types (default `unstarted`). `roles` maps a ticket label to an agent-roles role, set as `PASEO_AGENT_ROLE` on the agent. `provider` is `provider` or `provider/model`. `connection` limits a team to one connection.
+`project` is a Paseo project id or name. `label` is the dispatch label (defaults to the setting). `states` lists the eligible state types (default `unstarted`). `roles` maps a ticket label to an agents-roles role, set as `PASEO_AGENT_ROLE` on the agent. `provider` is `provider` or `provider/model`. `connection` limits a team to one connection.
 
 ## Setup
 

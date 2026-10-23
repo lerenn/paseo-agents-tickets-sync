@@ -8,7 +8,7 @@ import type { Ledger, LedgerEntry } from "./ledger";
 
 export type Paseo = PluginHookContext["paseo"];
 
-/** The role variable agent-roles reads. */
+/** The role variable agents-roles reads. */
 export const ROLE_ENV = "PASEO_AGENT_ROLE";
 
 const ACTIVE = new Set(["initializing", "running"]);
