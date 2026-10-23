@@ -43,7 +43,7 @@ beforeAll(async () => {
   // Not ./server/testing: importing it would load the stores before HOME is stubbed.
   home = mkdtempSync(path.join(tmpdir(), "lin-"));
   vi.stubEnv("HOME", home);
-  vi.stubEnv("AGENT_TICKETS_PORT", "0");
+  vi.stubEnv("AGENTS_TICKETS_SYNC_PORT", "0");
   vi.stubGlobal("fetch", fakeFetch);
   const { default: contribute } = await import("./index.server");
   cleanup = contribute({
@@ -96,28 +96,28 @@ describe("plugin wiring", () => {
   let capability = "";
   it("binds an agent created with PASEO_AGENT_TICKET and injects the MCP server", async () => {
     const out = await create({ PASEO_AGENT_TICKET: "any-1" });
-    expect(out.config.mcpServers["paseo-agent-tickets"].url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/mcp$/);
+    expect(out.config.mcpServers["paseo-agents-tickets-sync"].url).toMatch(/^http:\/\/127\.0\.0\.1:\d+\/mcp$/);
     expect(out.env.PASEO_AGENT_TICKET).toBe("ANY-1");
-    capability = out.env.PASEO_AGENT_TICKETS_CAPABILITY;
+    capability = out.env.PASEO_AGENTS_TICKETS_SYNC_CAPABILITY;
     expect(capability).toBeTruthy();
   });
 
   it("keeps the API key write-only and 0600", async () => {
-    const out = await rpcs.get("agent-tickets.set-key")!({ name: "Acme", key: "lin_api_secret" });
+    const out = await rpcs.get("agents-tickets-sync.set-key")!({ name: "Acme", key: "lin_api_secret" });
     expect(out).toEqual({ scope: "acme", user: "Ada" });
-    const file = path.join(home, ".paseo", "plugin-data", "agent-tickets", "keys.json");
+    const file = path.join(home, ".paseo", "plugin-data", "agents-tickets-sync", "keys.json");
     expect(statSync(file).mode & 0o777).toBe(0o600);
   });
 
   it("moves the ticket to In Progress when the agent's session opens, once", async () => {
-    await open({ PASEO_AGENT_TICKETS_CAPABILITY: capability });
+    await open({ PASEO_AGENTS_TICKETS_SYNC_CAPABILITY: capability });
     await settle();
     expect(current).toBe("In Progress");
     // A resume does not repeat the move.
-    await open({ PASEO_AGENT_TICKETS_CAPABILITY: capability }, { reason: "resume" });
+    await open({ PASEO_AGENTS_TICKETS_SYNC_CAPABILITY: capability }, { reason: "resume" });
     await settle();
     expect(writes.filter((w) => w.startsWith("state:"))).toEqual(["state:In Progress"]);
-    const status = await rpcs.get("agent-tickets.status")!({});
+    const status = await rpcs.get("agents-tickets-sync.status")!({});
     expect(status.agents[0]).toMatchObject({ agentId: "agent-1", issue: "ANY-1", started: true, state: "In Progress" });
     expect(status.backend).toBe("Linear");
     expect(status.workspaces).toEqual([{ name: "acme", scope: "acme" }]);
@@ -125,7 +125,7 @@ describe("plugin wiring", () => {
   });
 
   it("ignores history sessions and sessions without a capability", async () => {
-    before.get("agent.session_open")!({ request: { agentId: "x", purpose: "history", env: { PASEO_AGENT_TICKETS_CAPABILITY: capability } } }, {});
+    before.get("agent.session_open")!({ request: { agentId: "x", purpose: "history", env: { PASEO_AGENTS_TICKETS_SYNC_CAPABILITY: capability } } }, {});
     before.get("agent.session_open")!({ request: { agentId: "x", purpose: "interactive", env: {} } }, {});
     await settle();
     expect(writes).toHaveLength(1);
@@ -133,7 +133,7 @@ describe("plugin wiring", () => {
 
   it("serves the MCP tools through the injected endpoint", async () => {
     const out = await create({ PASEO_AGENT_TICKET: "ANY-1" });
-    const { url, headers } = out.config.mcpServers["paseo-agent-tickets"];
+    const { url, headers } = out.config.mcpServers["paseo-agents-tickets-sync"];
     const res = await realFetch(url, {
       method: "POST",
       headers: { ...headers, "content-type": "application/json" },
@@ -146,12 +146,12 @@ describe("plugin wiring", () => {
 
   it("keeps an archived agent's binding visible", async () => {
     await on.get("agent.archived")!({ agent: { id: "agent-1" }, archivedAt: "now" }, {});
-    const status = await rpcs.get("agent-tickets.status")!({});
+    const status = await rpcs.get("agents-tickets-sync.status")!({});
     expect(status.agents.find((a: any) => a.agentId === "agent-1").archived).toBe(true);
   });
 
   it("clears a key", async () => {
-    await rpcs.get("agent-tickets.clear-key")!({ name: "acme" });
-    expect((await rpcs.get("agent-tickets.status")!({})).workspaces).toEqual([]);
+    await rpcs.get("agents-tickets-sync.clear-key")!({ name: "acme" });
+    expect((await rpcs.get("agents-tickets-sync.status")!({})).workspaces).toEqual([]);
   });
 });

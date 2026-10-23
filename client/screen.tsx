@@ -5,8 +5,8 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "../shared/rpc";
 
-const STATUS_KEY = ["agent-tickets", "status"];
-const AUDIT_KEY = ["agent-tickets", "audit"];
+const STATUS_KEY = ["agents-tickets-sync", "status"];
+const AUDIT_KEY = ["agents-tickets-sync", "audit"];
 
 export function TicketsScreen({ theme, layout }: PluginScreenProps) {
   const styles = useMemo(() => makeStyles(theme, layout.compact), [theme, layout.compact]);
@@ -19,7 +19,7 @@ export function TicketsScreen({ theme, layout }: PluginScreenProps) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Agent tickets</Text>
+      <Text style={styles.title}>Agents tickets sync</Text>
       <Text style={styles.muted}>
         Agents created with PASEO_AGENT_TICKET=ANY-1234 are bound to that ticket. It moves to In Progress when they start, and only their ticket_done call
         (with evidence) closes it. Agents never see these API keys.

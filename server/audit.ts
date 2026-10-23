@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { auditEntrySchema, type AuditEntry } from "../shared/audit";
 
-export const defaultAuditPath = path.join(homedir(), ".paseo", "plugin-data", "agent-tickets", "audit.jsonl");
+export const defaultAuditPath = path.join(homedir(), ".paseo", "plugin-data", "agents-tickets-sync", "audit.jsonl");
 
 const KEEP = 2000;
 

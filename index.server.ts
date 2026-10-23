@@ -32,13 +32,13 @@ export default function contribute(server: PluginServerContext) {
   const service = new TicketService(keys, bindings, backend, async () => (await backend.current()).def.label, () => ({ url, error: startError }));
 
   // Resumed agents keep the URL they were created with, so the port has to be stable.
-  const port = Number(process.env.AGENT_TICKETS_PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.AGENTS_TICKETS_SYNC_PORT ?? DEFAULT_PORT);
   const started = http.start(port).then(
     (u) => {
       url = u;
     },
     (err: Error) => {
-      startError = `agent-tickets cannot listen on 127.0.0.1:${port}: ${err.message}. Set AGENT_TICKETS_PORT on the daemon.`;
+      startError = `agents-tickets-sync cannot listen on 127.0.0.1:${port}: ${err.message}. Set AGENTS_TICKETS_SYNC_PORT on the daemon.`;
       console.error(startError);
     },
   );

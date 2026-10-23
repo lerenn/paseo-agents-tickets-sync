@@ -6,10 +6,10 @@ The agent gets four tools. `ticket_comment` posts a short milestone comment, onc
 
 ## Setup
 
-Open the Agent tickets screen and add an API key per workspace of the ticket system. A key is checked when saved, stored on the daemon in a file only its user can read, and never shown again. Agents never see it; the daemon makes every call to the ticket system. When several workspaces are configured, each key is tried until one can see the ticket.
+Open the Agents tickets sync screen and add an API key per workspace of the ticket system. A key is checked when saved, stored on the daemon in a file only its user can read, and never shown again. Agents never see it; the daemon makes every call to the ticket system. When several workspaces are configured, each key is tried until one can see the ticket.
 
 The backend is chosen in the plugin settings. Linear is the only choice today. The screen also lists bound agents with their ticket's live state, and recent transitions with what was applied, skipped or failed.
 
 ## Limits
 
-The plugin serves its tools on `127.0.0.1:47823`; set `AGENT_TICKETS_PORT` on the daemon to change it. State is kept in `~/.paseo/plugin-data/agent-tickets`. A ticket whose team lacks an In Progress or Done state is left unchanged and the attempt is recorded. If the ticket system is unreachable when an agent starts, the move is retried the next time the agent's session opens. Dispatching agents from tickets is not part of this version.
+The plugin serves its tools on `127.0.0.1:47823`; set `AGENTS_TICKETS_SYNC_PORT` on the daemon to change it. State is kept in `~/.paseo/plugin-data/agents-tickets-sync`. A ticket whose team lacks an In Progress or Done state is left unchanged and the attempt is recorded. If the ticket system is unreachable when an agent starts, the move is retried the next time the agent's session opens. Dispatching agents from tickets is not part of this version.

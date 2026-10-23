@@ -2,7 +2,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { readJson, writeJson0600 } from "./files";
 
-export const defaultKeysPath = path.join(homedir(), ".paseo", "plugin-data", "agent-tickets", "keys.json");
+export const defaultKeysPath = path.join(homedir(), ".paseo", "plugin-data", "agents-tickets-sync", "keys.json");
 
 const NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$/;
 

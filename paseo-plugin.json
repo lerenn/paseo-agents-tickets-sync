@@ -1,6 +1,6 @@
 {
-  "id": "agent-tickets",
-  "name": "Agent tickets",
+  "id": "agents-tickets-sync",
+  "name": "Agents tickets sync",
   "description": "Bind agents to tickets: deterministic status transitions, milestone comments and Done with evidence, through MCP tools. Linear is the first backend.",
   "requirements": {
     "paseo": ">=0.11.2"
