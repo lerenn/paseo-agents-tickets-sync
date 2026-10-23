@@ -8,7 +8,6 @@ type Handler = (input: any, ctx?: any) => any;
 const before = new Map<string, Handler>();
 const on = new Map<string, Handler>();
 const rpcs = new Map<string, Handler>();
-let backendSetting = "linear";
 let cleanup: () => Promise<void> | void;
 let home: string;
 
@@ -49,10 +48,6 @@ beforeAll(async () => {
   cleanup = contribute({
     before: (name: string, h: Handler) => (before.set(name, h), () => before.delete(name)),
     on: (name: string, h: Handler) => (on.set(name, h), () => on.delete(name)),
-    registerSettings: () => ({
-      read: async () => ({ status: "ready", revision: "1", values: { backend: backendSetting } }),
-      subscribe: () => () => {},
-    }),
     handle: (contract: { name: string }, h: Handler) => void rpcs.set(contract.name, h),
   } as never) as () => Promise<void>;
 });
@@ -80,15 +75,6 @@ describe("plugin wiring", () => {
     await expect(create({ PASEO_AGENT_TICKET: "ANY-1", PASEO_LINEAR_ISSUE: "ANY-2" })).rejects.toThrow(/different tickets/);
   });
 
-  it("falls back to Linear when the backend setting is unreadable or unknown", async () => {
-    backendSetting = "jira";
-    try {
-      expect((await create({ PASEO_AGENT_TICKET: "ANY-1" })).env.PASEO_AGENT_TICKET).toBe("ANY-1");
-    } finally {
-      backendSetting = "linear";
-    }
-  });
-
   it("refuses a malformed ticket key", async () => {
     await expect(create({ PASEO_AGENT_TICKET: "banana" })).rejects.toThrow(/not a valid ticket key/);
   });
@@ -103,7 +89,7 @@ describe("plugin wiring", () => {
   });
 
   it("keeps the API key write-only and 0600", async () => {
-    const out = await rpcs.get("agents-tickets-sync.set-key")!({ name: "Acme", key: "lin_api_secret" });
+    const out = await rpcs.get("agents-tickets-sync.set-key")!({ backend: "linear", name: "Acme", key: "lin_api_secret" });
     expect(out).toEqual({ scope: "acme", user: "Ada" });
     const file = path.join(home, ".paseo", "plugin-data", "agents-tickets-sync", "keys.json");
     expect(statSync(file).mode & 0o777).toBe(0o600);
@@ -119,8 +105,8 @@ describe("plugin wiring", () => {
     expect(writes.filter((w) => w.startsWith("state:"))).toEqual(["state:In Progress"]);
     const status = await rpcs.get("agents-tickets-sync.status")!({});
     expect(status.agents[0]).toMatchObject({ agentId: "agent-1", issue: "ANY-1", started: true, state: "In Progress" });
-    expect(status.backend).toBe("Linear");
-    expect(status.workspaces).toEqual([{ name: "acme", scope: "acme" }]);
+    expect(status.backends).toEqual([{ id: "linear", label: "Linear", icon: "CircleDot" }]);
+    expect(status.workspaces).toEqual([{ name: "acme", backend: "linear", scope: "acme" }]);
     expect(JSON.stringify(status)).not.toContain("lin_api_secret");
   });
 
@@ -148,6 +134,10 @@ describe("plugin wiring", () => {
     await on.get("agent.archived")!({ agent: { id: "agent-1" }, archivedAt: "now" }, {});
     const status = await rpcs.get("agents-tickets-sync.status")!({});
     expect(status.agents.find((a: any) => a.agentId === "agent-1").archived).toBe(true);
+  });
+
+  it("rejects a connection to an unknown backend", async () => {
+    await expect(rpcs.get("agents-tickets-sync.set-key")!({ backend: "jira", name: "x", key: "k" })).rejects.toThrow(/Unknown ticket backend/);
   });
 
   it("clears a key", async () => {

@@ -6,9 +6,9 @@ The agent gets four tools. `ticket_comment` posts a short milestone comment, onc
 
 ## Setup
 
-Open the Agents Tickets Sync screen and add an API key per workspace of the ticket system. A key is checked when saved, stored on the daemon in a file only its user can read, and never shown again. Agents never see it; the daemon makes every call to the ticket system. When several workspaces are configured, each key is tried until one can see the ticket.
+Open the Agents Tickets Sync screen and add a connection: pick the ticket system, name the workspace and paste its API key. A key is checked when saved, stored on the daemon in a file only its user can read, and never shown again. Agents never see it; the daemon makes every call to the ticket system. When several connections exist, each one that accepts the ticket key format is tried until one can see the ticket.
 
-The backend is chosen in the plugin settings. Linear is the only choice today. The screen also lists bound agents with their ticket's live state, and recent transitions with what was applied, skipped or failed.
+Linear is the only ticket system today. The screen also lists bound agents with their ticket's live state, and recent transitions with what was applied, skipped or failed.
 
 ## Limits
 

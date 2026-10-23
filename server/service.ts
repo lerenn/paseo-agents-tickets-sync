@@ -1,6 +1,7 @@
 import type { BoundAgent } from "../shared/rpc";
 import type { BindingStore } from "./bindings";
-import type { TicketBackend } from "./backend";
+import type { BackendId } from "../shared/backends";
+import type { RoutedBackend } from "./backends";
 import type { KeyStore } from "./keys";
 
 const STATE_TTL_MS = 60_000;
@@ -12,8 +13,7 @@ export class TicketService {
   constructor(
     private readonly keys: KeyStore,
     private readonly bindings: BindingStore,
-    private readonly backend: TicketBackend,
-    private readonly backendLabel: () => Promise<string>,
+    private readonly backend: RoutedBackend,
     private readonly endpoint: () => { url: string | null; error: string | null },
     private readonly now: () => number = Date.now,
   ) {}
@@ -49,12 +49,15 @@ export class TicketService {
         };
       }),
     );
-    return { backend: await this.backendLabel(), workspaces: this.keys.names().map((name) => ({ name, scope: this.keys.scope(name) })), endpoint: this.endpoint(), agents };
+    return {
+      backends: this.backend.info(),
+      workspaces: this.keys.names().map((name) => ({ name, backend: this.keys.backend(name)!, scope: this.keys.scope(name) })),
+       endpoint: this.endpoint(), agents };
   }
 
-  async setKey(name: string, key: string) {
-    const who = await this.backend.validateCredential(key.trim());
-    this.keys.set(name, key, who.scope);
+  async setKey(backend: BackendId, name: string, key: string) {
+    const who = await this.backend.validate(backend, key.trim());
+    this.keys.set(backend, name, key, who.scope);
     this.cache.clear();
     return who;
   }

@@ -1,5 +1,5 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
-import { SelectedBackend } from "./server/backends";
+import { RoutedBackend } from "./server/backends";
 import { AuditLog } from "./server/audit";
 import { BindingStore } from "./server/bindings";
 import { TicketsHttp } from "./server/http";
@@ -10,7 +10,6 @@ import { TicketService } from "./server/service";
 import { TOOLS } from "./server/tools";
 import { Transitions } from "./server/transitions";
 import { boundTicket } from "./shared/plugin";
-import { ticketSettings } from "./shared/settings";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "./shared/rpc";
 
 const DEFAULT_PORT = 47823;
@@ -19,17 +18,13 @@ export default function contribute(server: PluginServerContext) {
   const keys = new KeyStore();
   const audit = new AuditLog();
   const bindings = new BindingStore();
-  const settings = server.registerSettings(ticketSettings);
-  const backend = new SelectedBackend(async () => {
-    const state = await settings.read();
-    return state.status === "ready" ? state.values.backend : ticketSettings.schema.parse({}).backend;
-  }, { keys });
+  const backend = new RoutedBackend(keys);
   const transitions = new Transitions(backend, audit);
   const http = new TicketsHttp({ bindings, mcp: new McpServer(TOOLS), transitions });
 
   let url: string | null = null;
   let startError: string | null = null;
-  const service = new TicketService(keys, bindings, backend, async () => (await backend.current()).def.label, () => ({ url, error: startError }));
+  const service = new TicketService(keys, bindings, backend, () => ({ url, error: startError }));
 
   // Resumed agents keep the URL they were created with, so the port has to be stable.
   const port = Number(process.env.AGENTS_TICKETS_SYNC_PORT ?? DEFAULT_PORT);
@@ -45,8 +40,7 @@ export default function contribute(server: PluginServerContext) {
 
   const removeCreate = server.before("agent.create", async ({ request }) => {
     // Throws on a malformed value: better a refused agent than one silently unbound.
-    const { def } = await backend.current();
-    const issue = boundTicket(request.env, def.parseKey);
+    const issue = boundTicket(request.env, (value) => backend.parseKey(value));
     if (!issue) return;
     await started;
     if (!url) throw new Error(`${startError} Create the agent without PASEO_AGENT_TICKET to skip tickets.`);
@@ -68,7 +62,7 @@ export default function contribute(server: PluginServerContext) {
 
   server.handle(statusRpc, () => service.status());
   server.handle(auditRpc, ({ limit }) => ({ entries: audit.recent(limit) }));
-  server.handle(setKeyRpc, ({ name, key }) => service.setKey(name, key));
+  server.handle(setKeyRpc, ({ backend: id, name, key }) => service.setKey(id, name, key));
   server.handle(clearKeyRpc, ({ name }) => {
     service.clearKey(name);
     return {};

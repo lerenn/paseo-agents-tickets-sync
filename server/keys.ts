@@ -1,5 +1,6 @@
 import { homedir } from "node:os";
 import path from "node:path";
+import type { BackendId } from "../shared/backends";
 import { readJson, writeJson0600 } from "./files";
 
 export const defaultKeysPath = path.join(homedir(), ".paseo", "plugin-data", "agents-tickets-sync", "keys.json");
@@ -8,7 +9,9 @@ const NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$/;
 
 export interface WorkspaceKey {
   key: string;
-  /** Linear organization the key belongs to, learned when it was validated. */
+  /** Ticket system the key belongs to. Absent in files written before backends were per connection: Linear. */
+  backend?: BackendId;
+  /** What the key gives access to (for Linear, the organization), learned when it was validated. */
   scope: string | null;
 }
 
@@ -19,7 +22,7 @@ export function normalizeName(name: string): string {
 }
 
 /**
- * Linear API keys, one per Linear workspace. Write-only from the UI's point of view: nothing here
+ * API keys, one per connection (a workspace of a ticket system). Write-only from the UI's point of view: nothing here
  * is returned to the client, which only learns which workspaces have a key. Stored mode 0600.
  */
 export class KeyStore {
@@ -29,8 +32,16 @@ export class KeyStore {
     return readJson(this.file, {});
   }
 
-  names(): string[] {
-    return Object.keys(this.read()).sort();
+  names(backend?: BackendId): string[] {
+    return Object.entries(this.read())
+      .filter(([, v]) => !backend || (v.backend ?? "linear") === backend)
+      .map(([name]) => name)
+      .sort();
+  }
+
+  backend(name: string): BackendId | null {
+    const entry = this.read()[normalizeName(name)];
+    return entry ? (entry.backend ?? "linear") : null;
   }
 
   scope(name: string): string | null {
@@ -41,11 +52,16 @@ export class KeyStore {
     return this.read()[normalizeName(name)]?.key ?? null;
   }
 
-  set(name: string, key: string, scope: string | null = null) {
+  set(backend: BackendId, name: string, key: string, scope: string | null = null) {
     const clean = key.trim();
     if (!clean) throw new Error("API key is empty");
     if (/\s/.test(clean)) throw new Error("API keys cannot contain whitespace");
-    writeJson0600(this.file, { ...this.read(), [normalizeName(name)]: { key: clean, scope } });
+    const id = normalizeName(name);
+    const existing = this.read()[id];
+    if (existing && (existing.backend ?? "linear") !== backend) {
+      throw new Error(`"${name}" is already a connection to another backend. Pick a different name or remove it first.`);
+    }
+    writeJson0600(this.file, { ...this.read(), [id]: { key: clean, scope, backend } });
   }
 
   clear(name: string) {
