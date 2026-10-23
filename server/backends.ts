@@ -1,62 +1,101 @@
+import { type BackendId, type BackendInfo } from "../shared/backends";
 import { parseLinearKey } from "../shared/plugin";
-import type { BackendId } from "../shared/settings";
-import type { TicketBackend } from "./backend";
+import { NoKeyError, type Issue, type TicketBackend } from "./backend";
 import type { KeyStore } from "./keys";
 import { LinearClient } from "./linear";
 
 export interface BackendDef {
   id: BackendId;
   label: string;
+  /** A Lucide icon name for the screen. */
+  icon: string;
   /** Normalizes a ticket reference from PASEO_AGENT_TICKET, or null when it is not one of this backend's. */
   parseKey(value: string): string | null;
   create(deps: { keys: KeyStore }): TicketBackend;
 }
 
+/** Adding a backend is an entry here, a value in BACKEND_IDS, and a TicketBackend implementation. */
 export const BACKENDS: Record<BackendId, BackendDef> = {
   linear: {
     id: "linear",
     label: "Linear",
+    icon: "CircleDot",
     parseKey: parseLinearKey,
     create: ({ keys }) => new LinearClient(keys),
   },
 };
 
 /**
- * Follows the backend selected in the settings. Instances are built once and kept, so a backend's
- * caches survive; switching the setting changes where the next call goes. An unreadable setting
- * falls back to Linear, the only backend there is.
+ * Sends each call to the backend that owns the connection. A ticket key is looked up only in
+ * backends that have a connection and whose key format accepts it; once found, the issue carries
+ * its backend, so later calls on it go back to the same one.
  */
-export class SelectedBackend implements TicketBackend {
+export class RoutedBackend implements TicketBackend {
   private readonly instances = new Map<BackendId, TicketBackend>();
 
   constructor(
-    private readonly selected: () => Promise<BackendId>,
-    private readonly deps: { keys: KeyStore },
+    private readonly keys: KeyStore,
+    private readonly defs: Record<string, BackendDef> = BACKENDS,
   ) {}
 
-  async current(): Promise<{ def: BackendDef; backend: TicketBackend }> {
-    const def = BACKENDS[await this.selected()] ?? BACKENDS.linear;
-    let backend = this.instances.get(def.id);
-    if (!backend) {
-      backend = def.create(this.deps);
-      this.instances.set(def.id, backend);
-    }
-    return { def, backend };
+  /** What the screen offers in the backend dropdown. */
+  info(): BackendInfo[] {
+    return Object.values(this.defs).map(({ id, label, icon }) => ({ id, label, icon }));
   }
 
-  async validateCredential(credential: string) {
-    return (await this.current()).backend.validateCredential(credential);
+  private backendOf(id: BackendId): TicketBackend {
+    const def = this.defs[id];
+    if (!def) throw new Error(`Unknown ticket backend: ${id}`);
+    let backend = this.instances.get(id);
+    if (!backend) {
+      backend = def.create({ keys: this.keys });
+      this.instances.set(id, backend);
+    }
+    return backend;
   }
-  async issue(key: string) {
-    return (await this.current()).backend.issue(key);
+
+  /** The first backend whose key format accepts the reference. */
+  parseKey(value: string): string | null {
+    for (const def of Object.values(this.defs)) {
+      const key = def.parseKey(value);
+      if (key) return key;
+    }
+    return null;
   }
-  async states(issue: Parameters<TicketBackend["states"]>[0]) {
-    return (await this.current()).backend.states(issue);
+
+  /** Validates a credential with the named backend. */
+  validate(backend: BackendId, credential: string) {
+    return this.backendOf(backend).validateCredential(credential);
   }
-  async setState(issue: Parameters<TicketBackend["setState"]>[0], stateId: string) {
-    return (await this.current()).backend.setState(issue, stateId);
+
+  validateCredential(): never {
+    throw new Error("Name the backend: use validate(backend, credential).");
   }
-  async comment(issue: Parameters<TicketBackend["comment"]>[0], body: string) {
-    return (await this.current()).backend.comment(issue, body);
+
+  async issue(key: string): Promise<Issue | null> {
+    const connected = [...new Set(this.keys.names().map((n) => this.keys.backend(n)!))];
+    if (connected.length === 0) throw new NoKeyError();
+    let lastError: Error | null = null;
+    for (const id of connected) {
+      if (!this.defs[id]?.parseKey(key)) continue;
+      try {
+        const found = await this.backendOf(id).issue(key);
+        if (found) return found;
+      } catch (err) {
+        lastError = err as Error;
+      }
+    }
+    if (lastError) throw lastError;
+    return null;
+  }
+
+  states(issue: Issue) {
+    return this.backendOf(issue.backend).states(issue);
+  }
+  setState(issue: Issue, stateId: string) {
+    return this.backendOf(issue.backend).setState(issue, stateId);
+  }
+  comment(issue: Issue, body: string) {
+    return this.backendOf(issue.backend).comment(issue, body);
   }
 }

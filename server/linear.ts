@@ -1,13 +1,7 @@
-import type { Issue, TeamState, TicketBackend } from "./backend";
+import { NoKeyError, type Issue, type TeamState, type TicketBackend } from "./backend";
 import type { KeyStore } from "./keys";
 
 export class LinearError extends Error {}
-
-export class NoKeyError extends LinearError {
-  constructor() {
-    super("No Linear API key is configured. Add one in the Linear screen.");
-  }
-}
 
 const URL_DEFAULT = "https://api.linear.app/graphql";
 const STATES_TTL_MS = 3600_000;
@@ -61,19 +55,20 @@ export class LinearClient implements TicketBackend {
   async issue(key: string): Promise<Issue | null> {
     const prefix = key.split("-")[0];
     const known = this.prefixOwner.get(prefix);
-    const order = known ? [known, ...this.keys.names().filter((n) => n !== known)] : this.keys.names();
+    const names = this.keys.names("linear");
+    const order = known && names.includes(known) ? [known, ...names.filter((n) => n !== known)] : names;
     if (order.length === 0) throw new NoKeyError();
     let lastError: Error | null = null;
     for (const workspace of order) {
       try {
-        const data = await this.gql<{ issue: Omit<Issue, "workspace"> | null }>(
+        const data = await this.gql<{ issue: Omit<Issue, "workspace" | "backend"> | null }>(
           workspace,
           "query($id: String!) { issue(id: $id) { id identifier title url state { id name type } team { id key } } }",
           { id: key },
         );
         if (data.issue) {
           this.prefixOwner.set(prefix, workspace);
-          return { ...data.issue, workspace };
+          return { ...data.issue, workspace, backend: "linear" };
         }
       } catch (err) {
         // Linear answers "Entity not found" for an issue another workspace owns.

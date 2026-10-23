@@ -1,3 +1,5 @@
+import type { BackendId } from "../shared/backends";
+
 export interface TeamState {
   id: string;
   name: string;
@@ -12,6 +14,8 @@ export interface Issue {
   url: string;
   state: { id: string; name: string; type: string };
   team: { id: string; key: string };
+  /** Which backend produced this issue, so later calls go back to it. */
+  backend: BackendId;
   /** Backend-specific scope that can see this issue (for Linear, the name of the stored API key). */
   workspace: string;
 }
@@ -30,3 +34,9 @@ export interface TicketBackend {
   comment(issue: Issue, body: string): Promise<void>;
 }
 
+
+export class NoKeyError extends Error {
+  constructor() {
+    super("No connection is configured. Add one in the Agents Tickets Sync screen.");
+  }
+}

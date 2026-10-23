@@ -55,6 +55,7 @@ export class FakeLinear implements TicketBackend {
       state: { id: s.id, name: s.name, type: s.type },
       team: { id: "team-1", key: key.split("-")[0] },
       workspace: "acme",
+      backend: "linear",
     };
   }
 

@@ -1,6 +1,7 @@
 import { defineRpc } from "@getpaseo/plugin";
 import { z } from "zod";
 import { auditEntrySchema } from "./audit";
+import { backendIdSchema, backendInfoSchema } from "./backends";
 
 export const boundAgentSchema = z.object({
   agentId: z.string().nullable(),
@@ -16,24 +17,24 @@ export const boundAgentSchema = z.object({
 });
 export type BoundAgent = z.infer<typeof boundAgentSchema>;
 
-export const workspaceSchema = z.object({ name: z.string(), scope: z.string().nullable() });
+export const workspaceSchema = z.object({ name: z.string(), backend: backendIdSchema, scope: z.string().nullable() });
 
 export const statusRpc = defineRpc({
   name: "agents-tickets-sync.status",
   input: z.object({}),
   output: z.object({
-    /** Label of the selected backend, for example Linear. */
-    backend: z.string(),
+    /** Backends a connection can be made to. */
+    backends: z.array(backendInfoSchema),
     workspaces: z.array(workspaceSchema),
     endpoint: z.object({ url: z.string().nullable(), error: z.string().nullable() }),
     agents: z.array(boundAgentSchema),
   }),
 });
 
-/** Store an API key for a workspace of the selected backend. Validated against it, then never returned. */
+/** Store an API key for a connection to a backend. Validated against it, then never returned. */
 export const setKeyRpc = defineRpc({
   name: "agents-tickets-sync.set-key",
-  input: z.object({ name: z.string(), key: z.string() }),
+  input: z.object({ backend: backendIdSchema, name: z.string(), key: z.string() }),
   output: z.object({ scope: z.string(), user: z.string() }),
 });
 
