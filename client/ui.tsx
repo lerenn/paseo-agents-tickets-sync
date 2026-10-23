@@ -1,12 +1,24 @@
 import type { PluginScreenProps } from "@getpaseo/plugin/client";
+import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
-export function Section({ title, hint, styles, children }: { title: string; hint?: string; styles: Styles; children: React.ReactNode }) {
+/** A panel; with `collapsible` it starts closed behind a chevron header showing `summary`. */
+export function Section({ title, hint, summary, collapsible, styles, children }: { title: string; hint?: string; summary?: string; collapsible?: boolean; styles: Styles; children: React.ReactNode }) {
+  const [open, setOpen] = useState(!collapsible);
   return (
     <View style={styles.panel}>
-      <Text style={styles.heading}>{title}</Text>
-      {hint ? <Text style={styles.muted}>{hint}</Text> : null}
-      {children}
+      {collapsible ? (
+        <Pressable accessibilityRole="button" accessibilityState={{ expanded: open }} accessibilityLabel={title} onPress={() => setOpen((v) => !v)}>
+          <Text style={styles.heading}>
+            {open ? "▾" : "▸"} {title}
+            {summary ? ` · ${summary}` : ""}
+          </Text>
+        </Pressable>
+      ) : (
+        <Text style={styles.heading}>{title}</Text>
+      )}
+      {open && hint ? <Text style={styles.muted}>{hint}</Text> : null}
+      {open ? children : null}
     </View>
   );
 }

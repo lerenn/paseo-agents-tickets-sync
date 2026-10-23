@@ -56,7 +56,7 @@ export function TicketsScreen({ theme, layout }: PluginScreenProps) {
         ))}
       </Section>
 
-      <Section title="Recent transitions" styles={styles}>
+      <Section title="Recent transitions" collapsible summary={`${log.data?.entries.length ?? 0}`} styles={styles}>
         {log.data?.entries.length === 0 ? <Text style={styles.muted}>Nothing yet.</Text> : null}
         {log.data?.entries.map((e, i) => (
           <Text key={`${e.at}-${i}`} style={styles.value}>
@@ -75,6 +75,8 @@ function Connections({ workspaces, backends, styles, onChanged }: { workspaces: 
   return (
     <Section
       title="Connections"
+      collapsible
+      summary={`${workspaces.length} set`}
       styles={styles}
       hint="A connection lets the daemon read and update tickets for your agents, so the agents never hold the key. Saved on this machine and never shown again."
     >
