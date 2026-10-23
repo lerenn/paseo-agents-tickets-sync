@@ -1,0 +1,14 @@
+{
+  "id": "linear",
+  "name": "Linear",
+  "description": "Bind agents to Linear tickets: deterministic status transitions, milestone comments and Done with evidence, through MCP tools.",
+  "requirements": {
+    "paseo": ">=0.11.2"
+  },
+  "build": [
+    [
+      "npm",
+      "ci"
+    ]
+  ]
+}
