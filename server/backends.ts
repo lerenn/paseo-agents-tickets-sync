@@ -1,6 +1,6 @@
 import { type BackendId, type BackendInfo } from "../shared/backends";
 import { parseLinearKey } from "../shared/plugin";
-import { NoKeyError, type Issue, type TicketBackend } from "./backend";
+import { NoKeyError, type Issue, type ListQuery, type TicketBackend } from "./backend";
 import type { KeyStore } from "./keys";
 import { LinearClient } from "./linear";
 
@@ -87,6 +87,18 @@ export class RoutedBackend implements TicketBackend {
     }
     if (lastError) throw lastError;
     return null;
+  }
+
+  /** Lists in every backend that has a connection (the team key does not say which). */
+  async list(query: ListQuery): Promise<Issue[]> {
+    const connected = [...new Set(this.keys.names().map((n) => this.keys.backend(n)!))];
+    if (connected.length === 0) throw new NoKeyError();
+    const found: Issue[] = [];
+    for (const id of connected) {
+      if (!this.defs[id]?.parseKey(`${query.team}-1`)) continue;
+      found.push(...(await this.backendOf(id).list(query)));
+    }
+    return found;
   }
 
   states(issue: Issue) {

@@ -78,4 +78,30 @@ describe("LinearClient", () => {
     const { client } = setup(() => ({ data: { viewer: { name: "Ada", organization: { urlKey: "acme" } } } }));
     expect(await client.validateCredential("k")).toEqual({ scope: "acme", user: "Ada" });
   });
+
+  it("lists labelled tickets of a team with a filter on label and state types", async () => {
+    let seen: any;
+    const { keys, client } = setup((_a, q, vars) => {
+      seen = vars;
+      return { data: { issues: { nodes: [{ ...ISSUE, description: "d", labels: { nodes: [{ name: "paseo" }, { name: "bug" }] } }] } } };
+    });
+    keys.set("linear", "acme", "k");
+    const out = await client.list({ team: "ANY", label: "paseo", stateTypes: ["unstarted"] });
+    expect(seen.filter).toEqual({
+      team: { key: { eq: "ANY" } },
+      labels: { name: { eqIgnoreCase: "paseo" } },
+      state: { type: { in: ["unstarted"] } },
+    });
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ identifier: "ANY-1", workspace: "acme", backend: "linear", labels: ["paseo", "bug"], description: "d" });
+  });
+
+  it("lists only in the named connection, and fails when it has none", async () => {
+    const { keys, calls, client } = setup(() => ({ data: { issues: { nodes: [] } } }));
+    keys.set("linear", "one", "k-one");
+    keys.set("linear", "two", "k-two");
+    await client.list({ team: "ANY", label: "paseo", stateTypes: ["unstarted"], connection: "two" });
+    expect(calls.map((c) => c.auth)).toEqual(["k-two"]);
+    await expect(client.list({ team: "ANY", label: "paseo", stateTypes: ["unstarted"], connection: "missing" })).rejects.toBeInstanceOf(NoKeyError);
+  });
 });

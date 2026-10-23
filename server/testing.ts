@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { AuditLog } from "./audit";
-import type { Issue, TeamState, TicketBackend } from "./backend";
+import type { Issue, ListQuery, TeamState, TicketBackend } from "./backend";
 import { Transitions } from "./transitions";
 
 export const tmp = () => mkdtempSync(path.join(tmpdir(), "lin-"));
@@ -21,6 +21,14 @@ export const STATES: TeamState[] = [
 
 /** In-memory Linear: tickets by key, with the calls it received. */
 export class FakeLinear implements TicketBackend {
+  /** Labelled tickets `list` returns. */
+  listed: Issue[] = [];
+  lists: unknown[] = [];
+  async list(query: ListQuery): Promise<Issue[]> {
+    this.lists.push(query);
+    return this.listed.filter((i) => i.team.key === query.team);
+  }
+
   async validateCredential(): Promise<{ scope: string; user: string }> {
     return { scope: "acme", user: "Ada" };
   }

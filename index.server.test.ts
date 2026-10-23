@@ -48,6 +48,10 @@ beforeAll(async () => {
   cleanup = contribute({
     before: (name: string, h: Handler) => (before.set(name, h), () => before.delete(name)),
     on: (name: string, h: Handler) => (on.set(name, h), () => on.delete(name)),
+    registerSettings: () => ({
+      read: async () => ({ status: "ready", revision: "1", values: { auto: false, pollSeconds: 60, maxConcurrent: 3, defaultLabel: "paseo" } }),
+      subscribe: () => () => {},
+    }),
     handle: (contract: { name: string }, h: Handler) => void rpcs.set(contract.name, h),
   } as never) as () => Promise<void>;
 });
@@ -147,6 +151,12 @@ describe("plugin wiring", () => {
 
   it("rejects a connection to an unknown backend", async () => {
     await expect(rpcs.get("tickets-dispatcher.set-key")!({ backend: "jira", name: "x", key: "k" })).rejects.toThrow(/Unknown ticket backend/);
+  });
+
+  it("reports dispatch as unconfigured and off, and refuses a manual start without the Paseo API", async () => {
+    const status = await rpcs.get("tickets-dispatcher.dispatch-status")!({}, {});
+    expect(status).toMatchObject({ configured: false, auto: false, maxConcurrent: 3, teams: [], dispatched: [], running: 0 });
+    await expect(rpcs.get("tickets-dispatcher.dispatch-start")!({ issue: "ANY-1" }, {})).rejects.toThrow(/Paseo API is not available/);
   });
 
   it("clears a key", async () => {

@@ -1,4 +1,4 @@
-import { NoKeyError, type Issue, type TeamState, type TicketBackend } from "./backend";
+import { NoKeyError, type Issue, type ListQuery, type TeamState, type TicketBackend } from "./backend";
 import type { KeyStore } from "./keys";
 
 export class LinearError extends Error {}
@@ -7,6 +7,15 @@ const URL_DEFAULT = "https://api.linear.app/graphql";
 const STATES_TTL_MS = 3600_000;
 
 type Fetch = typeof fetch;
+
+const ISSUE_FIELDS = "id identifier title url description state { id name type } team { id key } labels { nodes { name } }";
+
+type RawIssue = Omit<Issue, "workspace" | "backend" | "labels"> & { labels?: { nodes: { name: string }[] } };
+
+function toIssue(raw: RawIssue, workspace: string): Issue {
+  const { labels, ...rest } = raw;
+  return { ...rest, labels: labels?.nodes.map((l) => l.name) ?? [], workspace, backend: "linear" };
+}
 
 /**
  * Linear GraphQL over the stored keys. An issue key such as ANY-1234 only says which team it is
@@ -61,14 +70,10 @@ export class LinearClient implements TicketBackend {
     let lastError: Error | null = null;
     for (const workspace of order) {
       try {
-        const data = await this.gql<{ issue: Omit<Issue, "workspace" | "backend"> | null }>(
-          workspace,
-          "query($id: String!) { issue(id: $id) { id identifier title url state { id name type } team { id key } } }",
-          { id: key },
-        );
+        const data = await this.gql<{ issue: RawIssue | null }>(workspace, `query($id: String!) { issue(id: $id) { ${ISSUE_FIELDS} } }`, { id: key });
         if (data.issue) {
           this.prefixOwner.set(prefix, workspace);
-          return { ...data.issue, workspace, backend: "linear" };
+          return toIssue(data.issue, workspace);
         }
       } catch (err) {
         // Linear answers "Entity not found" for an issue another workspace owns.
@@ -77,6 +82,26 @@ export class LinearClient implements TicketBackend {
     }
     if (lastError) throw lastError;
     return null;
+  }
+
+  async list(query: ListQuery): Promise<Issue[]> {
+    const names = query.connection ? [query.connection].filter((n) => this.keys.backend(n) === "linear") : this.keys.names("linear");
+    if (names.length === 0) throw new NoKeyError();
+    const filter = {
+      team: { key: { eq: query.team } },
+      labels: { name: { eqIgnoreCase: query.label } },
+      state: { type: { in: query.stateTypes } },
+    };
+    const found: Issue[] = [];
+    for (const workspace of names) {
+      const data = await this.gql<{ issues: { nodes: RawIssue[] } }>(
+        workspace,
+        `query($filter: IssueFilter!, $first: Int!) { issues(filter: $filter, first: $first) { nodes { ${ISSUE_FIELDS} } } }`,
+        { filter, first: query.limit ?? 50 },
+      );
+      found.push(...data.issues.nodes.map((n) => toIssue(n, workspace)));
+    }
+    return found;
   }
 
   async states(issue: Issue): Promise<TeamState[]> {
