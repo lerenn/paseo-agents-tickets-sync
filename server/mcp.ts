@@ -17,6 +17,7 @@ export class McpServer {
   constructor(
     private readonly tools: ToolDef[],
     private readonly version = "0.1.0",
+    private readonly instructions?: string,
   ) {}
 
   /** Returns the JSON-RPC response, or null for a notification. */
@@ -36,6 +37,7 @@ export class McpServer {
           protocolVersion: SUPPORTED_VERSIONS.includes(asked) ? asked : SUPPORTED_VERSIONS[0],
           capabilities: { tools: {} },
           serverInfo: { name: "paseo-agents-tickets-sync", version: this.version },
+          ...(this.instructions ? { instructions: this.instructions } : {}),
         });
       }
       case "ping":

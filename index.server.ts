@@ -5,6 +5,7 @@ import { BindingStore } from "./server/bindings";
 import { TicketsHttp } from "./server/http";
 import { CAPABILITY_ENV, injectTickets } from "./server/inject";
 import { KeyStore } from "./server/keys";
+import { INSTRUCTIONS } from "./server/instructions";
 import { McpServer } from "./server/mcp";
 import { TicketService } from "./server/service";
 import { TOOLS } from "./server/tools";
@@ -20,7 +21,7 @@ export default function contribute(server: PluginServerContext) {
   const bindings = new BindingStore();
   const backend = new RoutedBackend(keys);
   const transitions = new Transitions(backend, audit);
-  const http = new TicketsHttp({ bindings, mcp: new McpServer(TOOLS), transitions });
+  const http = new TicketsHttp({ bindings, mcp: new McpServer(TOOLS, undefined, INSTRUCTIONS), transitions });
 
   let url: string | null = null;
   let startError: string | null = null;

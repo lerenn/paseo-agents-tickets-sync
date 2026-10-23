@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { INSTRUCTIONS } from "./instructions";
 import { McpServer } from "./mcp";
 import { setup } from "./testing";
 import { TOOLS, type ToolContext } from "./tools";
@@ -19,6 +20,23 @@ describe("MCP tools", () => {
     const res: any = await mcp.handle({ jsonrpc: "2.0", id: 1, method: "tools/list" }, c);
     expect(res.result.tools.map((t: any) => t.name)).toEqual(["ticket_status", "ticket_comment", "ticket_done", "ticket_blocked"]);
     for (const t of res.result.tools) expect(JSON.stringify(t.inputSchema)).not.toMatch(/issue|ticket/i);
+  });
+
+  it("sends instructions on initialize that name every tool and the key rules", async () => {
+    const { c } = ctx();
+    const mcp = new McpServer(TOOLS, undefined, INSTRUCTIONS);
+    const res: any = await mcp.handle({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } }, c);
+    const text: string = res.result.instructions;
+    for (const t of TOOLS) expect(text).toContain(t.name);
+    expect(text).toMatch(/Never edit the ticket any other way/);
+    expect(text).toMatch(/evidence/);
+    expect(text.length).toBeLessThan(1500);
+  });
+
+  it("omits instructions when none are given", async () => {
+    const { mcp, c } = ctx();
+    const res: any = await mcp.handle({ jsonrpc: "2.0", id: 1, method: "initialize", params: {} }, c);
+    expect(res.result).not.toHaveProperty("instructions");
   });
 
   it("answers initialize and ignores notifications", async () => {
