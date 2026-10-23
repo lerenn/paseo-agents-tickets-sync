@@ -14,6 +14,13 @@ A deterministic [Paseo](https://paseo.sh) plugin that turns tickets into agents 
 
 State lives in `~/.paseo/plugin-data/tickets-dispatcher/`: `keys.json`, `bindings.json`, `audit.jsonl`.
 
+## Dispatch
+
+- `server/dispatch.ts` (`Dispatcher`) polls the backend (`TicketBackend.list`) per configured team and starts agents through the Paseo SDK: `workspaces.create` (worktree, branch-off, in the team's project) then `workspace.agents.create` with `PASEO_AGENT_TICKET` (and `PASEO_AGENT_ROLE` from a label), so the usual create hook binds the agent and injects the MCP tools.
+- `server/ledger.ts` is written before anything is created and never cleared by polling: automatic dispatch skips any ticket with an entry. Manual start is refused only while that ticket's agent is still running.
+- Concurrency counts ledger agents whose status is initializing or running (idle ones do not hold a slot). `maxConcurrent` 0 means no limit.
+- Config: `shared/dispatch.ts` (settings, `dispatch.json` schema), `server/gitsource.ts` (shallow clone, refreshed on an interval, last good config kept), `server/config.ts`.
+
 ## Development
 
 ```bash
