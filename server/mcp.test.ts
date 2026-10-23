@@ -41,7 +41,7 @@ describe("MCP tools", () => {
 
   it("answers initialize and ignores notifications", async () => {
     const { mcp, c } = ctx();
-    expect(((await mcp.handle({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } }, c)) as any).result.serverInfo.name).toBe("paseo-agents-tickets-sync");
+    expect(((await mcp.handle({ jsonrpc: "2.0", id: 1, method: "initialize", params: { protocolVersion: "2025-06-18" } }, c)) as any).result.serverInfo.name).toBe("paseo-tickets-dispatcher");
     expect(await mcp.handle({ jsonrpc: "2.0", method: "notifications/initialized" }, c)).toBeNull();
   });
 

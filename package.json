@@ -1,5 +1,5 @@
 {
-  "name": "paseo-agents-tickets-sync",
+  "name": "paseo-tickets-dispatcher",
   "private": true,
   "version": "0.1.0",
   "description": "Bind Paseo agents to tickets (Linear first) with deterministic status transitions.",

@@ -7,8 +7,8 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import type { BackendId, BackendInfo } from "../shared/backends";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "../shared/rpc";
 
-const STATUS_KEY = ["agents-tickets-sync", "status"];
-const AUDIT_KEY = ["agents-tickets-sync", "audit"];
+const STATUS_KEY = ["tickets-dispatcher", "status"];
+const AUDIT_KEY = ["tickets-dispatcher", "audit"];
 
 type Workspace = { name: string; backend: BackendId; scope: string | null };
 
@@ -24,7 +24,7 @@ export function TicketsScreen({ theme, layout }: PluginScreenProps) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Agents Tickets Sync</Text>
+      <Text style={styles.title}>Tickets Dispatcher</Text>
       <Text style={styles.muted}>
         An agent created with PASEO_AGENT_TICKET=ANY-1234 is bound to that ticket, and its status follows the agent's work.
       </Text>

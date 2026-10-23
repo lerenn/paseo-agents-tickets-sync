@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { readJson, writeJson0600 } from "./files";
 
-export const defaultBindingsPath = path.join(homedir(), ".paseo", "plugin-data", "agents-tickets-sync", "bindings.json");
+export const defaultBindingsPath = path.join(homedir(), ".paseo", "plugin-data", "tickets-dispatcher", "bindings.json");
 
 export interface Binding {
   issue: string;

@@ -3,11 +3,11 @@ import { SidebarRow } from "@getpaseo/plugin/client/ui";
 import { TicketsScreen } from "./client/screen";
 
 function TicketsItem({ currentScreen, openScreen }: PluginSidebarItemProps) {
-  return <SidebarRow icon="CircleDot" active={currentScreen?.screenId === "agents-tickets-sync"} onPress={() => openScreen({ screenId: "agents-tickets-sync" })} />;
+  return <SidebarRow icon="CircleDot" active={currentScreen?.screenId === "tickets-dispatcher"} onPress={() => openScreen({ screenId: "tickets-dispatcher" })} />;
 }
 
 export default function contribute(client: PluginClientContext) {
-  client.addScreen({ id: "agents-tickets-sync", title: "Agents Tickets Sync", Component: TicketsScreen });
-  client.addSidebarHeaderItem({ id: "agents-tickets-sync", title: "Agents Tickets Sync", Component: TicketsItem });
+  client.addScreen({ id: "tickets-dispatcher", title: "Tickets Dispatcher", Component: TicketsScreen });
+  client.addSidebarHeaderItem({ id: "tickets-dispatcher", title: "Tickets Dispatcher", Component: TicketsItem });
   return () => {};
 }
