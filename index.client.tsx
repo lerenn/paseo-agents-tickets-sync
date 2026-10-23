@@ -7,7 +7,7 @@ function TicketsItem({ currentScreen, openScreen }: PluginSidebarItemProps) {
 }
 
 export default function contribute(client: PluginClientContext) {
-  client.addScreen({ id: "agents-tickets-sync", title: "Agents tickets sync", Component: TicketsScreen });
-  client.addSidebarHeaderItem({ id: "agents-tickets-sync", title: "Agents tickets sync", Component: TicketsItem });
+  client.addScreen({ id: "agents-tickets-sync", title: "Agents Tickets Sync", Component: TicketsScreen });
+  client.addSidebarHeaderItem({ id: "agents-tickets-sync", title: "Agents Tickets Sync", Component: TicketsItem });
   return () => {};
 }
