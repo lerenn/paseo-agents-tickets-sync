@@ -37,6 +37,6 @@ export interface TicketBackend {
 
 export class NoKeyError extends Error {
   constructor() {
-    super("No connection is configured. Add one in the Agents Tickets Sync screen.");
+    super("No connection is configured. Add one in the Tickets Dispatcher screen.");
   }
 }

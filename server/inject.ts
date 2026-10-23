@@ -4,9 +4,12 @@ import { TOOL_NAMES } from "./tools";
 
 type CreateRequest = PluginBeforeRequests["agent.create"];
 
-export const SERVER_NAME = "paseo-agents-tickets-sync";
-export const URL_ENV = "PASEO_AGENTS_TICKETS_SYNC_URL";
-export const CAPABILITY_ENV = "PASEO_AGENTS_TICKETS_SYNC_CAPABILITY";
+export const SERVER_NAME = "paseo-tickets-dispatcher";
+export const URL_ENV = "PASEO_TICKETS_DISPATCHER_URL";
+export const CAPABILITY_ENV = "PASEO_TICKETS_DISPATCHER_CAPABILITY";
+
+/** Name used before the rename; agents created then still carry it. */
+export const LEGACY_CAPABILITY_ENV = "PASEO_AGENTS_TICKETS_SYNC_CAPABILITY";
 
 /** Give a new agent bound to `issue` the ticket MCP tools, pre-approved, and tell it how to use them. */
 export function injectTickets(request: CreateRequest, o: { url: string; capability: string; issue: string }): CreateRequest {

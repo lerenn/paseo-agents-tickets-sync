@@ -3,7 +3,8 @@ import { RoutedBackend } from "./server/backends";
 import { AuditLog } from "./server/audit";
 import { BindingStore } from "./server/bindings";
 import { TicketsHttp } from "./server/http";
-import { CAPABILITY_ENV, injectTickets } from "./server/inject";
+import { migrateLegacyData } from "./server/files";
+import { CAPABILITY_ENV, injectTickets, LEGACY_CAPABILITY_ENV } from "./server/inject";
 import { KeyStore } from "./server/keys";
 import { INSTRUCTIONS } from "./server/instructions";
 import { McpServer } from "./server/mcp";
@@ -16,6 +17,7 @@ import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "./shared/rpc";
 const DEFAULT_PORT = 47823;
 
 export default function contribute(server: PluginServerContext) {
+  migrateLegacyData();
   const keys = new KeyStore();
   const audit = new AuditLog();
   const bindings = new BindingStore();
@@ -28,13 +30,13 @@ export default function contribute(server: PluginServerContext) {
   const service = new TicketService(keys, bindings, backend, () => ({ url, error: startError }));
 
   // Resumed agents keep the URL they were created with, so the port has to be stable.
-  const port = Number(process.env.AGENTS_TICKETS_SYNC_PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.TICKETS_DISPATCHER_PORT ?? process.env.AGENTS_TICKETS_SYNC_PORT ?? DEFAULT_PORT);
   const started = http.start(port).then(
     (u) => {
       url = u;
     },
     (err: Error) => {
-      startError = `agents-tickets-sync cannot listen on 127.0.0.1:${port}: ${err.message}. Set AGENTS_TICKETS_SYNC_PORT on the daemon.`;
+      startError = `tickets-dispatcher cannot listen on 127.0.0.1:${port}: ${err.message}. Set TICKETS_DISPATCHER_PORT on the daemon.`;
       console.error(startError);
     },
   );
@@ -51,7 +53,7 @@ export default function contribute(server: PluginServerContext) {
   // The session opens after the agent exists, so this is where the capability learns its agent and
   // where "agent start" happens. Resumes retry a start that did not land; the move is forward-only.
   const removeOpen = server.before("agent.session_open", ({ request }) => {
-    const capability = request.env[CAPABILITY_ENV];
+    const capability = request.env[CAPABILITY_ENV] ?? request.env[LEGACY_CAPABILITY_ENV];
     if (!capability || request.purpose !== "interactive") return;
     const binding = bindings.bind(capability, request.agentId);
     if (!binding || binding.started) return;

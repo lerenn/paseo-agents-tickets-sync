@@ -36,7 +36,7 @@ export class McpServer {
         return reply({
           protocolVersion: SUPPORTED_VERSIONS.includes(asked) ? asked : SUPPORTED_VERSIONS[0],
           capabilities: { tools: {} },
-          serverInfo: { name: "paseo-agents-tickets-sync", version: this.version },
+          serverInfo: { name: "paseo-tickets-dispatcher", version: this.version },
           ...(this.instructions ? { instructions: this.instructions } : {}),
         });
       }

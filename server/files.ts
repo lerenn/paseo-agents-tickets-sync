@@ -1,4 +1,5 @@
-import { chmodSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
+import { homedir } from "node:os";
 import path from "node:path";
 
 export function readJson<T>(file: string, fallback: T): T {
@@ -16,4 +17,17 @@ export function writeJson0600(file: string, value: unknown) {
   writeFileSync(tmp, JSON.stringify(value), { mode: 0o600 });
   chmodSync(tmp, 0o600);
   renameSync(tmp, file);
+}
+
+/**
+ * The plugin was called agents-tickets-sync before it became tickets-dispatcher. Its keys,
+ * bindings and audit move to the new data directory once, so nothing has to be entered again.
+ */
+export function migrateLegacyData(home: string = homedir()): boolean {
+  const base = path.join(home, ".paseo", "plugin-data");
+  const legacy = path.join(base, "agents-tickets-sync");
+  const current = path.join(base, "tickets-dispatcher");
+  if (!existsSync(legacy) || existsSync(current)) return false;
+  renameSync(legacy, current);
+  return true;
 }

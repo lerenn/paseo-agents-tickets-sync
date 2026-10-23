@@ -1,7 +1,7 @@
 {
-  "id": "agents-tickets-sync",
-  "name": "Agents Tickets Sync",
-  "description": "Bind agents to tickets: deterministic status transitions, milestone comments and Done with evidence, through MCP tools. Linear is the first backend.",
+  "id": "tickets-dispatcher",
+  "name": "Tickets Dispatcher",
+  "description": "Turns tickets into agents and keeps tickets in step with their work: deterministic status, milestone comments and Done with evidence. Linear first.",
   "requirements": {
     "paseo": ">=0.11.2"
   },

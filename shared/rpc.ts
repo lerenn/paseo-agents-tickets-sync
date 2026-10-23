@@ -20,7 +20,7 @@ export type BoundAgent = z.infer<typeof boundAgentSchema>;
 export const workspaceSchema = z.object({ name: z.string(), backend: backendIdSchema, scope: z.string().nullable() });
 
 export const statusRpc = defineRpc({
-  name: "agents-tickets-sync.status",
+  name: "tickets-dispatcher.status",
   input: z.object({}),
   output: z.object({
     /** Backends a connection can be made to. */
@@ -33,20 +33,20 @@ export const statusRpc = defineRpc({
 
 /** Store an API key for a connection to a backend. Validated against it, then never returned. */
 export const setKeyRpc = defineRpc({
-  name: "agents-tickets-sync.set-key",
+  name: "tickets-dispatcher.set-key",
   input: z.object({ backend: backendIdSchema, name: z.string(), key: z.string() }),
   output: z.object({ scope: z.string(), user: z.string() }),
 });
 
 export const clearKeyRpc = defineRpc({
-  name: "agents-tickets-sync.clear-key",
+  name: "tickets-dispatcher.clear-key",
   input: z.object({ name: z.string() }),
   output: z.object({}),
 });
 
 /** Recent transitions, newest first. */
 export const auditRpc = defineRpc({
-  name: "agents-tickets-sync.audit",
+  name: "tickets-dispatcher.audit",
   input: z.object({ limit: z.number().int().min(1).max(500).default(100) }),
   output: z.object({ entries: z.array(auditEntrySchema) }),
 });
