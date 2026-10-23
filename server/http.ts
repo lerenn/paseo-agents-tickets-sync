@@ -7,7 +7,7 @@ import type { Transitions } from "./transitions";
 const MAX_BODY = 1_000_000;
 
 /** Local MCP endpoint agents reach at `/mcp`. Bound to loopback and guarded by a per-agent capability. */
-export class LinearHttp {
+export class TicketsHttp {
   private server: Server | null = null;
 
   constructor(private readonly deps: { bindings: BindingStore; mcp: McpServer; transitions: Transitions }) {}

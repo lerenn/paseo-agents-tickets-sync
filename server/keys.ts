@@ -2,14 +2,14 @@ import { homedir } from "node:os";
 import path from "node:path";
 import { readJson, writeJson0600 } from "./files";
 
-export const defaultKeysPath = path.join(homedir(), ".paseo", "linear", "keys.json");
+export const defaultKeysPath = path.join(homedir(), ".paseo", "plugin-data", "agent-tickets", "keys.json");
 
 const NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,39}$/;
 
 export interface WorkspaceKey {
   key: string;
   /** Linear organization the key belongs to, learned when it was validated. */
-  org: string | null;
+  scope: string | null;
 }
 
 export function normalizeName(name: string): string {
@@ -33,19 +33,19 @@ export class KeyStore {
     return Object.keys(this.read()).sort();
   }
 
-  org(name: string): string | null {
-    return this.read()[normalizeName(name)]?.org ?? null;
+  scope(name: string): string | null {
+    return this.read()[normalizeName(name)]?.scope ?? null;
   }
 
   get(name: string): string | null {
     return this.read()[normalizeName(name)]?.key ?? null;
   }
 
-  set(name: string, key: string, org: string | null = null) {
+  set(name: string, key: string, scope: string | null = null) {
     const clean = key.trim();
     if (!clean) throw new Error("API key is empty");
     if (/\s/.test(clean)) throw new Error("API keys cannot contain whitespace");
-    writeJson0600(this.file, { ...this.read(), [normalizeName(name)]: { key: clean, org } });
+    writeJson0600(this.file, { ...this.read(), [normalizeName(name)]: { key: clean, scope } });
   }
 
   clear(name: string) {

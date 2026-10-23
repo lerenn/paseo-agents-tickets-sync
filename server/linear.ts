@@ -45,7 +45,7 @@ export class LinearClient implements TicketBackend {
   }
 
   /** Validates a key and returns the Linear organization it belongs to. */
-  async whoami(key: string): Promise<{ org: string; user: string }> {
+  async validateCredential(key: string): Promise<{ scope: string; user: string }> {
     const res = await (this.opts.fetch ?? fetch)(this.opts.url ?? URL_DEFAULT, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: key },
@@ -55,7 +55,7 @@ export class LinearClient implements TicketBackend {
     if (!res.ok) throw new LinearError(`Linear answered HTTP ${res.status}.`);
     const body = (await res.json()) as { data?: { viewer?: { name: string; organization: { urlKey: string } } }; errors?: { message: string }[] };
     if (body.errors?.length || !body.data?.viewer) throw new LinearError(body.errors?.map((e) => e.message).join("; ") ?? "Linear returned no viewer.");
-    return { org: body.data.viewer.organization.urlKey, user: body.data.viewer.name };
+    return { scope: body.data.viewer.organization.urlKey, user: body.data.viewer.name };
   }
 
   async issue(key: string): Promise<Issue | null> {

@@ -21,6 +21,10 @@ export const STATES: TeamState[] = [
 
 /** In-memory Linear: tickets by key, with the calls it received. */
 export class FakeLinear implements TicketBackend {
+  async validateCredential(): Promise<{ scope: string; user: string }> {
+    return { scope: "acme", user: "Ada" };
+  }
+
   readonly comments: { key: string; body: string }[] = [];
   readonly moves: { key: string; to: string }[] = [];
   failComment = false;

@@ -1,20 +1,19 @@
 import type { BoundAgent } from "../shared/rpc";
 import type { BindingStore } from "./bindings";
-import type { KeyStore } from "./keys";
 import type { TicketBackend } from "./backend";
-import type { LinearClient } from "./linear";
+import type { KeyStore } from "./keys";
 
 const STATE_TTL_MS = 60_000;
 
 /** Backs the screen's RPCs: keys (write-only) and the bound agents with their tickets' live state. */
-export class LinearService {
+export class TicketService {
   private readonly cache = new Map<string, { at: number; state: string | null; title: string | null; url: string | null }>();
 
   constructor(
     private readonly keys: KeyStore,
     private readonly bindings: BindingStore,
-    private readonly api: TicketBackend,
-    private readonly client: Pick<LinearClient, "whoami">,
+    private readonly backend: TicketBackend,
+    private readonly backendLabel: () => Promise<string>,
     private readonly endpoint: () => { url: string | null; error: string | null },
     private readonly now: () => number = Date.now,
   ) {}
@@ -24,7 +23,7 @@ export class LinearService {
     if (hit && this.now() - hit.at < STATE_TTL_MS) return hit;
     let value = { at: this.now(), state: null as string | null, title: null as string | null, url: null as string | null };
     try {
-      const found = await this.api.issue(issue);
+      const found = await this.backend.issue(issue);
       if (found) value = { ...value, state: found.state.name, title: found.title, url: found.url };
     } catch {
       // Linear unreachable or no key: the screen shows the ticket without a state.
@@ -50,12 +49,12 @@ export class LinearService {
         };
       }),
     );
-    return { workspaces: this.keys.names().map((name) => ({ name, org: this.keys.org(name) })), endpoint: this.endpoint(), agents };
+    return { backend: await this.backendLabel(), workspaces: this.keys.names().map((name) => ({ name, scope: this.keys.scope(name) })), endpoint: this.endpoint(), agents };
   }
 
   async setKey(name: string, key: string) {
-    const who = await this.client.whoami(key.trim());
-    this.keys.set(name, key, who.org);
+    const who = await this.backend.validateCredential(key.trim());
+    this.keys.set(name, key, who.scope);
     this.cache.clear();
     return who;
   }

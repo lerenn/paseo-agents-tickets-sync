@@ -81,7 +81,7 @@ export class Transitions {
     return this.serial(issue, agentId, "done", async (t) => {
       const proof = clean(evidence);
       if (proof.length < MIN_EVIDENCE) {
-        return fail(`linear_done needs verification evidence (at least ${MIN_EVIDENCE} characters): what you ran or checked, and its result. The ticket was not changed.`);
+        return fail(`ticket_done needs verification evidence (at least ${MIN_EVIDENCE} characters): what you ran or checked, and its result. The ticket was not changed.`);
       }
       const current = rank(t.issue.state);
       if (current >= DONE) return skip(current === CANCELED ? "The ticket is canceled; left as is." : `The ticket is already ${t.issue.state.name}.`, t);
@@ -94,7 +94,7 @@ export class Transitions {
   blocked(issue: string, agentId: string | null, reason: string): Promise<Outcome> {
     return this.serial(issue, agentId, "blocked", async (t) => {
       const why = clean(reason);
-      if (!why) return fail("linear_blocked needs a reason.");
+      if (!why) return fail("ticket_blocked needs a reason.");
       const current = rank(t.issue.state);
       if (current >= DONE) return skip(current === CANCELED ? "The ticket is canceled; left as is." : `The ticket is already ${t.issue.state.name}.`, t);
       const posted = await this.post(t, `${COMMENT_PREFIX}Blocked: ${why}`);
@@ -115,7 +115,7 @@ export class Transitions {
       const t: Target = { key: issue, agentId, kind, issue: null as unknown as Issue };
       try {
         const found = await this.api.issue(issue);
-        if (!found) return this.finish(t, fail(`Linear has no ticket ${issue} that the configured API keys can see.`));
+        if (!found) return this.finish(t, fail(`The ticket system shows no ticket ${issue} to the configured credentials.`));
         t.issue = found;
         return this.finish(t, await run(t));
       } catch (err) {

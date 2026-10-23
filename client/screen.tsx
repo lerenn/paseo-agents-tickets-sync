@@ -5,10 +5,10 @@ import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "../shared/rpc";
 
-const STATUS_KEY = ["linear", "status"];
-const AUDIT_KEY = ["linear", "audit"];
+const STATUS_KEY = ["agent-tickets", "status"];
+const AUDIT_KEY = ["agent-tickets", "audit"];
 
-export function LinearScreen({ theme, layout }: PluginScreenProps) {
+export function TicketsScreen({ theme, layout }: PluginScreenProps) {
   const styles = useMemo(() => makeStyles(theme, layout.compact), [theme, layout.compact]);
   const queryClient = useQueryClient();
   const status = useRpc(statusRpc);
@@ -19,17 +19,18 @@ export function LinearScreen({ theme, layout }: PluginScreenProps) {
 
   return (
     <ScrollView style={styles.screen} contentContainerStyle={styles.content}>
-      <Text style={styles.title}>Linear</Text>
+      <Text style={styles.title}>Agent tickets</Text>
       <Text style={styles.muted}>
-        Agents created with PASEO_LINEAR_ISSUE=ANY-1234 are bound to that ticket. It moves to In Progress when they start, and only their linear_done call
+        Agents created with PASEO_AGENT_TICKET=ANY-1234 are bound to that ticket. It moves to In Progress when they start, and only their ticket_done call
         (with evidence) closes it. Agents never see these API keys.
       </Text>
+      {query.data ? <Text style={styles.muted}>Backend: {query.data.backend}. Change it in the plugin settings.</Text> : null}
       {query.data?.endpoint.error ? <Text style={styles.error}>{query.data.endpoint.error}</Text> : null}
       {query.error ? <Text style={styles.error}>{(query.error as Error).message}</Text> : null}
 
       <Text style={styles.heading}>Workspaces</Text>
-      {query.data?.workspaces.length === 0 ? <Text style={styles.muted}>No API key yet. Add one per Linear workspace.</Text> : null}
-      {query.data?.workspaces.map((w) => <WorkspaceCard key={w.name} name={w.name} org={w.org} styles={styles} onChanged={reload} />)}
+      {query.data?.workspaces.length === 0 ? <Text style={styles.muted}>No API key yet. Add one per workspace of the selected backend.</Text> : null}
+      {query.data?.workspaces.map((w) => <WorkspaceCard key={w.name} name={w.name} scope={w.scope} styles={styles} onChanged={reload} />)}
       <AddKey styles={styles} onChanged={reload} />
 
       <Text style={styles.heading}>Bound agents</Text>
@@ -62,7 +63,7 @@ export function LinearScreen({ theme, layout }: PluginScreenProps) {
   );
 }
 
-function WorkspaceCard({ name, org, styles, onChanged }: { name: string; org: string | null; styles: Styles; onChanged(): void }) {
+function WorkspaceCard({ name, scope, styles, onChanged }: { name: string; scope: string | null; styles: Styles; onChanged(): void }) {
   const clear = useRpc(clearKeyRpc);
   const [error, setError] = useState<string | null>(null);
   return (
@@ -71,7 +72,7 @@ function WorkspaceCard({ name, org, styles, onChanged }: { name: string; org: st
         <Text style={styles.name}>{name}</Text>
         <Text style={styles.badge}>key set</Text>
       </View>
-      {org ? <Text style={styles.muted}>Linear organization: {org}</Text> : null}
+      {scope ? <Text style={styles.muted}>Access: {scope}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
       <Button styles={styles} label="Remove key" onPress={() => clear({ name }).then(onChanged, (e) => setError((e as Error).message))} />
     </View>
@@ -98,8 +99,8 @@ function AddKey({ styles, onChanged }: { styles: Styles; onChanged(): void }) {
       <Text style={styles.heading}>Add or replace an API key</Text>
       <SettingsInput label="Workspace name" hint="Any short name, for example anyshift. Replaces the existing key of that name." initialValue="" onChangeText={setName} />
       <SettingsInput
-        label="Linear API key"
-        hint="Checked against Linear when saved. Stored on the daemon in a file only its user can read, and never shown again."
+        label="API key"
+        hint="Checked against the ticket system when saved. Stored on the daemon in a file only its user can read, and never shown again."
         initialValue=""
         secureTextEntry
         onChangeText={setKeyValue}

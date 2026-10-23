@@ -1,13 +1,13 @@
 import type { PluginClientContext, PluginSidebarItemProps } from "@getpaseo/plugin/client";
 import { SidebarRow } from "@getpaseo/plugin/client/ui";
-import { LinearScreen } from "./client/screen";
+import { TicketsScreen } from "./client/screen";
 
-function LinearItem({ currentScreen, openScreen }: PluginSidebarItemProps) {
-  return <SidebarRow icon="CircleDot" active={currentScreen?.screenId === "linear"} onPress={() => openScreen({ screenId: "linear" })} />;
+function TicketsItem({ currentScreen, openScreen }: PluginSidebarItemProps) {
+  return <SidebarRow icon="CircleDot" active={currentScreen?.screenId === "agent-tickets"} onPress={() => openScreen({ screenId: "agent-tickets" })} />;
 }
 
 export default function contribute(client: PluginClientContext) {
-  client.addScreen({ id: "linear", title: "Linear", Component: LinearScreen });
-  client.addSidebarHeaderItem({ id: "linear", title: "Linear", Component: LinearItem });
+  client.addScreen({ id: "agent-tickets", title: "Agent tickets", Component: TicketsScreen });
+  client.addSidebarHeaderItem({ id: "agent-tickets", title: "Agent tickets", Component: TicketsItem });
   return () => {};
 }

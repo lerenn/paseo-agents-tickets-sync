@@ -1,7 +1,7 @@
 {
-  "id": "linear",
-  "name": "Linear",
-  "description": "Bind agents to Linear tickets: deterministic status transitions, milestone comments and Done with evidence, through MCP tools.",
+  "id": "agent-tickets",
+  "name": "Agent tickets",
+  "description": "Bind agents to tickets: deterministic status transitions, milestone comments and Done with evidence, through MCP tools. Linear is the first backend.",
   "requirements": {
     "paseo": ">=0.11.2"
   },

@@ -1,15 +1,16 @@
 import type { PluginServerContext } from "@getpaseo/plugin/server";
+import { SelectedBackend } from "./server/backends";
 import { AuditLog } from "./server/audit";
 import { BindingStore } from "./server/bindings";
-import { LinearHttp } from "./server/http";
-import { CAPABILITY_ENV, injectLinear } from "./server/inject";
+import { TicketsHttp } from "./server/http";
+import { CAPABILITY_ENV, injectTickets } from "./server/inject";
 import { KeyStore } from "./server/keys";
-import { LinearClient } from "./server/linear";
 import { McpServer } from "./server/mcp";
-import { LinearService } from "./server/service";
+import { TicketService } from "./server/service";
 import { TOOLS } from "./server/tools";
 import { Transitions } from "./server/transitions";
-import { boundIssue } from "./shared/plugin";
+import { boundTicket } from "./shared/plugin";
+import { ticketSettings } from "./shared/settings";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "./shared/rpc";
 
 const DEFAULT_PORT = 47823;
@@ -18,33 +19,38 @@ export default function contribute(server: PluginServerContext) {
   const keys = new KeyStore();
   const audit = new AuditLog();
   const bindings = new BindingStore();
-  const client = new LinearClient(keys);
-  const transitions = new Transitions(client, audit);
-  const http = new LinearHttp({ bindings, mcp: new McpServer(TOOLS), transitions });
+  const settings = server.registerSettings(ticketSettings);
+  const backend = new SelectedBackend(async () => {
+    const state = await settings.read();
+    return state.status === "ready" ? state.values.backend : ticketSettings.schema.parse({}).backend;
+  }, { keys });
+  const transitions = new Transitions(backend, audit);
+  const http = new TicketsHttp({ bindings, mcp: new McpServer(TOOLS), transitions });
 
   let url: string | null = null;
   let startError: string | null = null;
-  const service = new LinearService(keys, bindings, client, client, () => ({ url, error: startError }));
+  const service = new TicketService(keys, bindings, backend, async () => (await backend.current()).def.label, () => ({ url, error: startError }));
 
   // Resumed agents keep the URL they were created with, so the port has to be stable.
-  const port = Number(process.env.LINEAR_PLUGIN_PORT ?? DEFAULT_PORT);
+  const port = Number(process.env.AGENT_TICKETS_PORT ?? DEFAULT_PORT);
   const started = http.start(port).then(
     (u) => {
       url = u;
     },
     (err: Error) => {
-      startError = `linear cannot listen on 127.0.0.1:${port}: ${err.message}. Set LINEAR_PLUGIN_PORT on the daemon.`;
+      startError = `agent-tickets cannot listen on 127.0.0.1:${port}: ${err.message}. Set AGENT_TICKETS_PORT on the daemon.`;
       console.error(startError);
     },
   );
 
   const removeCreate = server.before("agent.create", async ({ request }) => {
     // Throws on a malformed value: better a refused agent than one silently unbound.
-    const issue = boundIssue(request.env);
+    const { def } = await backend.current();
+    const issue = boundTicket(request.env, def.parseKey);
     if (!issue) return;
     await started;
-    if (!url) throw new Error(`${startError} Create the agent without PASEO_LINEAR_ISSUE to skip Linear.`);
-    return injectLinear(request, { url, capability: bindings.create(issue, request.config.cwd), issue });
+    if (!url) throw new Error(`${startError} Create the agent without PASEO_AGENT_TICKET to skip tickets.`);
+    return injectTickets(request, { url, capability: bindings.create(issue, request.config.cwd), issue });
   });
 
   // The session opens after the agent exists, so this is where the capability learns its agent and

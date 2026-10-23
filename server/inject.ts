@@ -1,19 +1,19 @@
 import type { PluginBeforeRequests } from "@getpaseo/plugin/server";
-import { ISSUE_ENV } from "../shared/plugin";
+import { TICKET_ENV } from "../shared/plugin";
 import { TOOL_NAMES } from "./tools";
 
 type CreateRequest = PluginBeforeRequests["agent.create"];
 
-export const SERVER_NAME = "paseo-linear";
-export const URL_ENV = "PASEO_LINEAR_URL";
-export const CAPABILITY_ENV = "PASEO_LINEAR_CAPABILITY";
+export const SERVER_NAME = "paseo-agent-tickets";
+export const URL_ENV = "PASEO_AGENT_TICKETS_URL";
+export const CAPABILITY_ENV = "PASEO_AGENT_TICKETS_CAPABILITY";
 
-/** Give a new agent bound to `issue` the Linear MCP tools, pre-approved, and tell it how to use them. */
-export function injectLinear(request: CreateRequest, o: { url: string; capability: string; issue: string }): CreateRequest {
+/** Give a new agent bound to `issue` the ticket MCP tools, pre-approved, and tell it how to use them. */
+export function injectTickets(request: CreateRequest, o: { url: string; capability: string; issue: string }): CreateRequest {
   const note =
-    `Linear: you are bound to ticket ${o.issue}. Its status is managed for you: it moves to In Progress when you start. ` +
-    "Use linear_comment for a milestone worth recording (not for chat), linear_blocked with a reason when you cannot proceed, " +
-    "and linear_done with verification evidence only when the work is finished and verified. Do not change the ticket's status any other way.";
+    `Tickets: you are bound to ticket ${o.issue}. Its status is managed for you: it moves to In Progress when you start. ` +
+    "Use ticket_comment for a milestone worth recording (not for chat), ticket_blocked with a reason when you cannot proceed, " +
+    "and ticket_done with verification evidence only when the work is finished and verified. Do not change the ticket's status any other way.";
   return {
     ...request,
     config: {
@@ -30,6 +30,6 @@ export function injectLinear(request: CreateRequest, o: { url: string; capabilit
         ],
       },
     },
-    env: { ...request.env, [ISSUE_ENV]: o.issue, [URL_ENV]: o.url, [CAPABILITY_ENV]: o.capability },
+    env: { ...request.env, [TICKET_ENV]: o.issue, [URL_ENV]: o.url, [CAPABILITY_ENV]: o.capability },
   };
 }

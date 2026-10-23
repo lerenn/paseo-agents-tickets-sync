@@ -73,8 +73,8 @@ describe("LinearClient", () => {
     await expect(client.comment({ ...ISSUE, workspace: "a" }, "b")).rejects.toThrow("boom");
   });
 
-  it("whoami returns the organization", async () => {
+  it("validateCredential returns the organization as the scope", async () => {
     const { client } = setup(() => ({ data: { viewer: { name: "Ada", organization: { urlKey: "acme" } } } }));
-    expect(await client.whoami("k")).toEqual({ org: "acme", user: "Ada" });
+    expect(await client.validateCredential("k")).toEqual({ scope: "acme", user: "Ada" });
   });
 });

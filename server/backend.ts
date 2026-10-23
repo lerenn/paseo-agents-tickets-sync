@@ -21,6 +21,8 @@ export interface Issue {
  * that can read a ticket, list its team's states, set one and comment can sit behind this.
  */
 export interface TicketBackend {
+  /** Checks a credential and says what it gives access to. Throws when it is refused. */
+  validateCredential(credential: string): Promise<{ scope: string; user: string }>;
   /** Null when no configured workspace can see the issue. */
   issue(key: string): Promise<Issue | null>;
   states(issue: Issue): Promise<TeamState[]>;

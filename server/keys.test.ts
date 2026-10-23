@@ -12,7 +12,7 @@ describe("KeyStore", () => {
     expect(statSync(file).mode & 0o777).toBe(0o600);
     expect(keys.names()).toEqual(["acme"]);
     expect(keys.get("ACME")).toBe("lin_api_x");
-    expect(keys.org("acme")).toBe("acme");
+    expect(keys.scope("acme")).toBe("acme");
   });
 
   it("clears a key", () => {

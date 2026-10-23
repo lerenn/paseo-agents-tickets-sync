@@ -2,14 +2,14 @@ import { request } from "node:http";
 import path from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { BindingStore } from "./bindings";
-import { LinearHttp } from "./http";
+import { TicketsHttp } from "./http";
 import { McpServer } from "./mcp";
 import { setup, tmp } from "./testing";
 import { TOOLS } from "./tools";
 
 let url: string;
 let token: string;
-let http: LinearHttp;
+let http: TicketsHttp;
 const s = setup();
 
 beforeAll(async () => {
@@ -17,7 +17,7 @@ beforeAll(async () => {
   const bindings = new BindingStore(path.join(tmp(), "b.json"));
   token = bindings.create("ANY-1", "/w");
   bindings.bind(token, "agent-1");
-  http = new LinearHttp({ bindings, mcp: new McpServer(TOOLS), transitions: s.transitions });
+  http = new TicketsHttp({ bindings, mcp: new McpServer(TOOLS), transitions: s.transitions });
   url = await http.start(0);
 });
 afterAll(() => http.stop());
@@ -25,9 +25,9 @@ afterAll(() => http.stop());
 const post = (auth: string | null, body: unknown, p = "/mcp") =>
   fetch(url + p, { method: "POST", headers: { "content-type": "application/json", ...(auth ? { authorization: `Bearer ${auth}` } : {}) }, body: JSON.stringify(body) });
 
-describe("LinearHttp", () => {
+describe("TicketsHttp", () => {
   it("serves MCP calls for a valid capability, attributed to the agent", async () => {
-    const res = await post(token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "linear_comment", arguments: { text: "hi" } } });
+    const res = await post(token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "ticket_comment", arguments: { text: "hi" } } });
     expect(res.status).toBe(200);
     expect(s.linear.comments).toEqual([{ key: "ANY-1", body: "[Paseo] hi" }]);
     expect(s.audit.recent()[0]).toMatchObject({ agentId: "agent-1", kind: "comment" });
