@@ -1,7 +1,8 @@
 import type { BoundAgent } from "../shared/rpc";
 import type { BindingStore } from "./bindings";
 import type { KeyStore } from "./keys";
-import type { LinearApi, LinearClient } from "./linear";
+import type { TicketBackend } from "./backend";
+import type { LinearClient } from "./linear";
 
 const STATE_TTL_MS = 60_000;
 
@@ -12,7 +13,7 @@ export class LinearService {
   constructor(
     private readonly keys: KeyStore,
     private readonly bindings: BindingStore,
-    private readonly api: LinearApi,
+    private readonly api: TicketBackend,
     private readonly client: Pick<LinearClient, "whoami">,
     private readonly endpoint: () => { url: string | null; error: string | null },
     private readonly now: () => number = Date.now,

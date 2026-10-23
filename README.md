@@ -10,6 +10,8 @@ A deterministic [Paseo](https://paseo.sh) plugin that binds agents to Linear tic
 - **MCP.** A minimal streamable-HTTP MCP server on loopback (`server/mcp.ts`, `server/http.ts`), authenticated by the capability.
 - **Auth.** Keys live in `~/.paseo/linear/keys.json`, mode 0600, written through an RPC and never returned.
 
+- **Backend boundary.** `server/backend.ts` is the only contract the status machine, tools and screen service use (`TicketBackend`). `server/linear.ts`, `server/keys.ts` and the `PASEO_LINEAR_ISSUE` convention are the Linear-specific parts; `index.server.ts` is the only place that wires them together. A rename to a multi-backend plugin means adding a second backend and a backend choice at the wiring, not touching the status machine.
+
 State lives in `~/.paseo/linear/`: `keys.json`, `bindings.json`, `audit.jsonl`.
 
 ## Development

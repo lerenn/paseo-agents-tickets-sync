@@ -1,6 +1,6 @@
 import type { AuditEntry } from "../shared/audit";
 import type { AuditLog } from "./audit";
-import type { Issue, LinearApi, TeamState } from "./linear";
+import type { Issue, TeamState, TicketBackend } from "./backend";
 
 /** Marks every comment this plugin posts, so people and other tools can tell them from their own. */
 export const COMMENT_PREFIX = "[Paseo] ";
@@ -60,7 +60,7 @@ export class Transitions {
   private readonly chains = new Map<string, Promise<unknown>>();
 
   constructor(
-    private readonly api: LinearApi,
+    private readonly api: TicketBackend,
     private readonly audit: AuditLog,
   ) {}
 

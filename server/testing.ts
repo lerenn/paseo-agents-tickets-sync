@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { AuditLog } from "./audit";
-import type { Issue, LinearApi, TeamState } from "./linear";
+import type { Issue, TeamState, TicketBackend } from "./backend";
 import { Transitions } from "./transitions";
 
 export const tmp = () => mkdtempSync(path.join(tmpdir(), "lin-"));
@@ -20,7 +20,7 @@ export const STATES: TeamState[] = [
 ];
 
 /** In-memory Linear: tickets by key, with the calls it received. */
-export class FakeLinear implements LinearApi {
+export class FakeLinear implements TicketBackend {
   readonly comments: { key: string; body: string }[] = [];
   readonly moves: { key: string; to: string }[] = [];
   failComment = false;

@@ -1,31 +1,5 @@
+import type { Issue, TeamState, TicketBackend } from "./backend";
 import type { KeyStore } from "./keys";
-
-export interface TeamState {
-  id: string;
-  name: string;
-  type: string;
-  position: number;
-}
-
-export interface Issue {
-  id: string;
-  identifier: string;
-  title: string;
-  url: string;
-  state: { id: string; name: string; type: string };
-  team: { id: string; key: string };
-  /** Name of the stored API key that can see this issue. */
-  workspace: string;
-}
-
-/** What the transition engine needs from Linear. */
-export interface LinearApi {
-  /** Null when no configured workspace can see the issue. */
-  issue(key: string): Promise<Issue | null>;
-  states(issue: Issue): Promise<TeamState[]>;
-  setState(issue: Issue, stateId: string): Promise<void>;
-  comment(issue: Issue, body: string): Promise<void>;
-}
 
 export class LinearError extends Error {}
 
@@ -45,7 +19,7 @@ type Fetch = typeof fetch;
  * in, not which Linear workspace, so each key is tried until one sees the issue; the winner is
  * remembered per team prefix.
  */
-export class LinearClient implements LinearApi {
+export class LinearClient implements TicketBackend {
   private readonly prefixOwner = new Map<string, string>();
   private readonly stateCache = new Map<string, { at: number; states: TeamState[] }>();
 

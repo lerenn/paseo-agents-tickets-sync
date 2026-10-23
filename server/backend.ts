@@ -1,0 +1,30 @@
+export interface TeamState {
+  id: string;
+  name: string;
+  type: string;
+  position: number;
+}
+
+export interface Issue {
+  id: string;
+  identifier: string;
+  title: string;
+  url: string;
+  state: { id: string; name: string; type: string };
+  team: { id: string; key: string };
+  /** Backend-specific scope that can see this issue (for Linear, the name of the stored API key). */
+  workspace: string;
+}
+
+/**
+ * What the transition engine needs from a ticket system. Linear is the first backend; anything
+ * that can read a ticket, list its team's states, set one and comment can sit behind this.
+ */
+export interface TicketBackend {
+  /** Null when no configured workspace can see the issue. */
+  issue(key: string): Promise<Issue | null>;
+  states(issue: Issue): Promise<TeamState[]>;
+  setState(issue: Issue, stateId: string): Promise<void>;
+  comment(issue: Issue, body: string): Promise<void>;
+}
+

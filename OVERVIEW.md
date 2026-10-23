@@ -12,4 +12,4 @@ The screen also lists bound agents with their ticket's live state, and recent tr
 
 ## Limits
 
-The plugin serves its tools on `127.0.0.1:47822`; set `LINEAR_PLUGIN_PORT` on the daemon to change it. A ticket whose team lacks an In Progress or Done state is left unchanged and the attempt is recorded. If Linear is unreachable when an agent starts, the move is retried the next time the agent's session opens. Dispatching agents from tickets is not part of this version.
+The plugin serves its tools on `127.0.0.1:47823`; set `LINEAR_PLUGIN_PORT` on the daemon to change it. A ticket whose team lacks an In Progress or Done state is left unchanged and the attempt is recorded. If Linear is unreachable when an agent starts, the move is retried the next time the agent's session opens. Dispatching agents from tickets is not part of this version.

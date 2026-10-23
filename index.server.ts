@@ -12,7 +12,7 @@ import { Transitions } from "./server/transitions";
 import { boundIssue } from "./shared/plugin";
 import { auditRpc, clearKeyRpc, setKeyRpc, statusRpc } from "./shared/rpc";
 
-const DEFAULT_PORT = 47822;
+const DEFAULT_PORT = 47823;
 
 export default function contribute(server: PluginServerContext) {
   const keys = new KeyStore();
