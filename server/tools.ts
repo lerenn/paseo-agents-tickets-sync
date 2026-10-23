@@ -42,7 +42,7 @@ export const TOOLS: ToolDef[] = [
   {
     name: "ticket_done",
     description:
-      "Mark your ticket Done. Call it only when the work is finished and verified. " +
+      "Mark your ticket Done. Call it only when the work is finished and verified; if you cannot finish, use ticket_blocked instead. " +
       `Evidence is required (at least ${MIN_EVIDENCE} characters): what you ran or checked and the result, for example the tests passed or the PR that merged. ` +
       "It is posted on the ticket with the status change.",
     input: z.object({ evidence: z.string().min(MIN_EVIDENCE).describe("Verification evidence: commands run, results, links.") }),
